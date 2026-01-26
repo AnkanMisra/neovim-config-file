@@ -26,18 +26,27 @@ vim.opt.shiftwidth = 4
 vim.opt.expandtab = true
 vim.opt.smartindent = true
 vim.opt.wrap = true
-vim.opt.linebreak = false
+vim.opt.linebreak = true
 vim.opt.breakindent = true
 vim.opt.showbreak = "↪ "
 vim.opt.cursorline = true
 vim.opt.termguicolors = true
+vim.opt.showmode = false
 vim.opt.mouse = "a"
 vim.opt.clipboard = "unnamedplus"
 vim.opt.signcolumn = "yes"
-vim.opt.scrolloff = 8
-vim.opt.updatetime = 200
+vim.opt.scrolloff = 0
+vim.opt.updatetime = 300
 vim.opt.splitright = true
 vim.opt.splitbelow = true
+
+-- Hide statusline for maximum vertical space
+vim.opt.laststatus = 0
+
+-- Disable swap files to avoid E325 errors
+vim.opt.swapfile = false
+vim.opt.backup = false
+vim.opt.writebackup = false
 
 -- Treat issue docs without extensions as markdown
 vim.filetype.add({
@@ -81,119 +90,76 @@ vim.api.nvim_create_autocmd("FileType", {
 -----------------------------------------------------------
 require("lazy").setup({
 
+  {
+    "nvim-tree/nvim-web-devicons",
+    config = true,
+  },
+
+  {
+    "folke/snacks.nvim",
+    priority = 1000,
+    lazy = false,
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {
+      picker   = { enabled = true },
+      explorer = { enabled = true },
+      terminal = { enabled = true },
+      notifier = { enabled = true },
+
+      dashboard = {
+  enabled = true,
+  width = 50,
+
+  header = [[
+ ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
+ ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
+ ██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
+ ██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║
+ ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║
+ ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝
+]],
+
+  sections = {
+    { section = "header", padding = 2 },
+    { section = "keys", gap = 1, padding = 1 },
+    { section = "recent_files", limit = 4, padding = 1 },
+    { section = "startup", padding = 1 },
+  },
+},
+
+
+      statuscolumn = { enabled = true },
+      image = {
+        enabled = true,
+        backend = "kitty",
+      },
+      bigfile = { enabled = true },
+      quickfile = { enabled = true },
+      scope = { enabled = true },
+    },
+  },
+
   ---------------------------------------------------------
   -- THEME
   ---------------------------------------------------------
   {
-    "folke/tokyonight.nvim",
+    "catppuccin/nvim",
+    name = "catppuccin",
     priority = 1000,
     config = function()
-      vim.cmd("colorscheme tokyonight")
-    end,
-  },
-
-  ---------------------------------------------------------
-  -- DASHBOARD
-  ---------------------------------------------------------
-  {
-    "goolord/alpha-nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
-    config = function()
-      local alpha = require("alpha")
-      local dashboard = require("alpha.themes.dashboard")
-
-      dashboard.section.header.val = {
-        " ███╗   ██╗██╗   ██╗██╗███╗   ███╗",
-        " ████╗  ██║██║   ██║██║████╗ ████║",
-        " ██╔██╗ ██║██║   ██║██║██╔████╔██║",
-        " ██║╚██╗██║╚██╗ ██╔╝██║██║╚██╔╝██║",
-        " ██║ ╚████║ ╚████╔╝ ██║██║ ╚═╝ ██║",
-        " ╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚═╝     ╚═╝",
-        "",
-        " Write Code. Build Things. Do Epic Shit.",
-      }
-
-      dashboard.section.buttons.val = {
-        dashboard.button("n", "  New file", ":ene <CR>"),
-        dashboard.button("f", "󰈞  Find file", ":Telescope find_files<CR>"),
-        dashboard.button("g", "󰊄  Live grep", ":Telescope live_grep<CR>"),
-        dashboard.button("c", "  Config", ":e ~/.config/nvim/init.lua<CR>"),
-        dashboard.button("q", "  Quit", ":qa<CR>"),
-      }
-
-      alpha.setup(dashboard.opts)
-    end,
-  },
-
-  ---------------------------------------------------------
-  -- FILE EXPLORER
-  ---------------------------------------------------------
-  {
-    "nvim-tree/nvim-tree.lua",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
-    config = function()
-      local function on_attach(bufnr)
-        local api = require("nvim-tree.api")
-        api.config.mappings.default_on_attach(bufnr)
-
-        vim.api.nvim_create_autocmd("CursorHold", {
-          buffer = bufnr,
-          callback = function()
-            local node = api.tree.get_node_under_cursor()
-            if node and node.type == "file" then
-              api.node.open.preview()
-            end
-          end,
-        })
-      end
-
-      require("nvim-tree").setup({
-        on_attach = on_attach,
-        view = {
-          -- Put tree on the left so nvim-tree's `renderer.full_name` popup works
-          -- (it only shows for left-side trees).
-          side = "left",
-          width = 42,
-        },
-        filters = {
-          dotfiles = false,
-          git_ignored = false,
-        },
-        update_focused_file = {
-          enable = true,
-          update_root = true,
-        },
-        renderer = {
-          highlight_git = true,
-          highlight_opened_files = "name",
-          -- Show full filename in a floating popup when it doesn't fit the tree width.
-          full_name = true,
-        },
-        actions = {
-          open_file = {
-            quit_on_open = false,
-            resize_window = true,
-            window_picker = {
-              enable = false,
-            },
+      require("catppuccin").setup({
+        flavour = "mocha",
+        transparent_background = true,
+        integrations = {
+          treesitter = true,
+          native_lsp = {
+            enabled = true,
           },
+          cmp = true,
+          gitsigns = true,
         },
       })
-
-      -- Toggle tree
-      vim.keymap.set("n", "<leader>t", ":NvimTreeToggle<CR>")
-    end,
-  },
-
-  ---------------------------------------------------------
-  -- STATUS LINE
-  ---------------------------------------------------------
-  {
-    "nvim-lualine/lualine.nvim",
-    config = function()
-      require("lualine").setup({
-        options = { theme = "tokyonight" },
-      })
+      vim.cmd.colorscheme("catppuccin")
     end,
   },
 
@@ -267,7 +233,7 @@ require("lazy").setup({
           "jdtls",
           "ts_ls",
 
-          -- Web/config
+          -- Web/config hehe idk comment
           "eslint",
           "html",
           "cssls",
@@ -278,38 +244,7 @@ require("lazy").setup({
           "taplo",
           "marksman",
           "terraformls",
-        },
-      })
-    end,
-  },
-
-  ---------------------------------------------------------
-  -- TELESCOPE
-  ---------------------------------------------------------
-  {
-    "nvim-telescope/telescope.nvim",
-    dependencies = { "nvim-lua/plenary.nvim" },
-    config = function()
-      local telescope = require("telescope")
-      local actions = require("telescope.actions")
-
-      telescope.setup({
-        defaults = {
-          prompt_prefix = "   ",
-          selection_caret = " ❯ ",
-          path_display = { "smart" },
-          mappings = {
-            i = {
-              ["<Esc>"] = actions.close,
-            },
-          },
-        },
-        pickers = {
-          find_files = {
-            hidden = true,
-            no_ignore = true,
-            follow = true,
-          },
+          "tailwindcss",
         },
       })
     end,
@@ -374,6 +309,7 @@ require("lazy").setup({
         taplo = {},
         marksman = {},
         terraformls = {},
+        tailwindcss = {},
 
         lua_ls = {
           settings = {
@@ -394,8 +330,43 @@ require("lazy").setup({
   },
 
   ---------------------------------------------------------
+  -- GITHUB COPILOT
+  ---------------------------------------------------------
+  {
+    "zbirenbaum/copilot.lua",
+    event = "InsertEnter",
+    config = function()
+      require("copilot").setup({
+        suggestion = {
+          enabled = true,
+          auto_trigger = true, -- suggestions appear while typing
+          keymap = {
+            accept = "<C-l>", -- accept suggestion
+            next = "<M-]>",   -- Alt+] for next
+            prev = "<M-[>",   -- Alt+[ for prev (NOT Ctrl+[ which is Escape!)
+            dismiss = "<C-e>",
+          },
+        },
+        panel = { enabled = false },
+      })
+    end,
+  },
+
+  {
+    "zbirenbaum/copilot-cmp",
+    dependencies = { "zbirenbaum/copilot.lua" },
+    config = function()
+      require("copilot_cmp").setup()
+    end,
+  },
+
+  ---------------------------------------------------------
   -- AUTOCOMPLETE
   ---------------------------------------------------------
+  {
+    "onsails/lspkind.nvim",
+  },
+
   {
     "hrsh7th/nvim-cmp",
     dependencies = {
@@ -407,18 +378,45 @@ require("lazy").setup({
     config = function()
       local cmp = require("cmp")
       cmp.setup({
+        completion = {
+          autocomplete = { require("cmp.types").cmp.TriggerEvent.TextChanged },
+        },
         snippet = {
           expand = function(args)
             require("luasnip").lsp_expand(args.body)
           end,
         },
         mapping = cmp.mapping.preset.insert({
+          ["<Tab>"] = cmp.mapping.select_next_item(),
+          ["<S-Tab>"] = cmp.mapping.select_prev_item(),
           ["<CR>"] = cmp.mapping.confirm({ select = true }),
+          ["<C-e>"] = cmp.mapping.abort(), -- Ctrl+E to close menu
         }),
         sources = {
+          { name = "copilot" }, -- AI first
           { name = "nvim_lsp" },
           { name = "buffer" },
           { name = "path" },
+        },
+        formatting = {
+          format = require("lspkind").cmp_format({
+            mode = "symbol_text", -- shows icon + text
+            maxwidth = 50,
+            ellipsis_char = "...",
+          }),
+        },
+        sorting = {
+          priority_weight = 2,
+          comparators = {
+            require("cmp.config.compare").offset,
+            require("cmp.config.compare").exact,
+            require("cmp.config.compare").score,
+
+            require("cmp.config.compare").kind,      
+            require("cmp.config.compare").sort_text,
+            require("cmp.config.compare").length,
+            require("cmp.config.compare").order,
+          },
         },
       })
     end,
@@ -445,21 +443,6 @@ require("lazy").setup({
   },
 })
 
--- VS Code–style file search
-vim.keymap.set("n", "<D-p>", function()
-  require("telescope.builtin").find_files({
-    hidden = true,
-    no_ignore = true,
-    follow = true,
-    cwd = vim.loop.cwd(),
-  })
-end, { desc = "Find files (Cmd+P)" })
-
--- Search text in project (Cmd+Shift+F like VS Code)
-vim.keymap.set("n", "<D-S-f>", function()
-  require("telescope.builtin").live_grep()
-end, { desc = "Search text (Cmd+Shift+F)" })
-
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "markdown", "text" },
   callback = function(args)
@@ -474,17 +457,96 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
-vim.api.nvim_create_autocmd("VimEnter", {
+local Snacks = require("snacks")
+
+-- Cmd+P (files)
+vim.keymap.set("n", "<D-p>", function()
+  Snacks.picker.files({
+    hidden = true,
+    ignored = false,
+  })
+end)
+
+-- Cmd+G (grep)
+vim.keymap.set("n", "<D-g>", function()
+  require("snacks").picker.grep()
+end, { desc = "Search text (Snacks)" })
+
+-- Cmd+E (explorer)
+vim.keymap.set("n", "<D-e>", function()
+  require("snacks").explorer()
+end, { desc = "Explorer (Snacks)" })
+
+-- Cmd+T (terminal)
+vim.keymap.set("n", "<D-t>", function()
+  require("snacks").terminal()
+end, { desc = "Terminal (Snacks)" })
+
+-- Leader+GG (lazygit)
+vim.keymap.set("n", "<leader>gg", function()
+  require("snacks").lazygit()
+end, { desc = "Lazygit (Snacks)" })
+
+-- Markdown UX
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "markdown" },
   callback = function()
-    local arg0 = vim.fn.argv(0)
-    if arg0 ~= "" and vim.fn.isdirectory(arg0) == 1 then
-      vim.schedule(function()
-        local ok = pcall(require, "nvim-tree")
-        if ok then
-          pcall(vim.cmd, "NvimTreeOpen")
-        end
-      end)
-    end
+    -- Soft wrap for writing
+    vim.opt_local.wrap = true
+    vim.opt_local.linebreak = true
+
+    -- Quick actions
+    vim.keymap.set("n", "<leader>mp", function()
+      require("snacks").picker.grep({ search = "^#" })
+    end, { buffer = true, desc = "Headings (Snacks)" })
+
+    vim.keymap.set("n", "<leader>mt", function()
+      require("snacks").terminal()
+    end, { buffer = true, desc = "Terminal (Snacks)" })
   end,
 })
 
+-- Hide mode since statusline shows it
+vim.api.nvim_create_autocmd("UIEnter", {
+  once = true,
+  callback = function()
+    vim.opt.showmode = false
+  end,
+})
+
+-- Also set it here to avoid flicker on startup
+vim.cmd("set noshowmode")
+
+-- K = hover (standard behavior)
+vim.keymap.set("n", "K", vim.lsp.buf.hover)
+
+-- Show diagnostics under cursor (floating)
+vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, { desc = "Show diagnostics" })
+
+-- Navigate diagnostics (handy)
+vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Prev diagnostic" })
+vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
+
+vim.api.nvim_create_autocmd("InsertEnter", {
+  callback = function()
+    vim.lsp.buf.clear_references()
+  end,
+})
+
+vim.diagnostic.config({
+  virtual_text = false, -- no inline red text
+  signs = true,
+  underline = true,
+  update_in_insert = false,
+  severity_sort = true,
+  float = {
+    border = "rounded",
+    source = "always",
+  },
+})
+
+vim.api.nvim_create_autocmd("CursorHold", {
+  callback = function()
+    vim.diagnostic.open_float(nil, { focus = false })
+  end,
+})
