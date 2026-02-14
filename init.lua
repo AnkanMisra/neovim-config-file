@@ -101,8 +101,25 @@ require("lazy").setup({
     lazy = false,
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {
-      picker   = { enabled = true },
-      explorer = { enabled = true },
+      picker = {
+        enabled = true,
+        sources = {
+          files = {
+            hidden = true,
+            ignored = true,
+          },
+          grep = {
+            hidden = true,
+            ignored = true,
+          },
+        },
+      },
+      explorer = {
+        enabled = true,
+        hidden = true,   -- show dotfiles like .env
+        ignored = true,  -- show .gitignore'd files
+        include = { ".*" },  -- include all dotfiles
+      },
       terminal = { enabled = true },
       notifier = { enabled = true },
 
@@ -463,7 +480,7 @@ local Snacks = require("snacks")
 vim.keymap.set("n", "<D-p>", function()
   Snacks.picker.files({
     hidden = true,
-    ignored = false,
+    no_ignore = true,  -- show .gitignore'd files
   })
 end)
 
